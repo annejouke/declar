@@ -27,7 +27,14 @@ public sealed class AptCommand : ICommand
                 changeArgsFactory: package => ["sudo", "apt-get", "install", "-y", package],
                 missingRepositoryMessage: "No package with this name was found in configured apt repositories.",
                 notInstalledInCurrentStateMessage: "Package exists but is not installed in current system state.",
-                stillInstalledMessage: "Package is still installed in current system state.");
+                stillInstalledMessage: "Package is still installed in current system state.",
+                preflight: preflightContext => PackageVendorCommandSupport.EnsureMetadataFreshAsync(
+                    preflightContext,
+                    cacheKey: "apt",
+                    freshnessWindow: TimeSpan.FromMinutes(30),
+                    fileName: "sudo",
+                    "apt-get",
+                    "update"));
         }
     }
 

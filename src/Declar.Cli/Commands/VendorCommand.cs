@@ -101,6 +101,20 @@ public sealed class VendorCommand : ICommand
                     $"Installing flathub is not implemented for host distro '{host.Distro}'.");
             }
 
+            context.Shell.DescribeAction($"running metadata refresh preflight for '{installPlan.RefreshCacheKey}'");
+            var preflightResult = await PackageVendorCommandSupport.EnsureMetadataFreshAsync(
+                context,
+                cacheKey: installPlan.RefreshCacheKey,
+                freshnessWindow: TimeSpan.FromMinutes(30),
+                fileName: installPlan.RefreshCommand[0],
+                args: [.. installPlan.RefreshCommand.Skip(1)]);
+            if (!preflightResult.IsSuccess)
+            {
+                return VendorOperationResult.Error(
+                    preflightResult.ExitCode,
+                    preflightResult.ErrorMessage ?? "Failed to refresh package metadata.");
+            }
+
             foreach (var command in installPlan.Commands)
             {
                 context.Shell.DescribeAction($"installing flatpak via: {string.Join(" ", command)}");
@@ -194,13 +208,22 @@ public sealed class VendorCommand : ICommand
         return host.OperatingSystem switch
         {
             HostOperatingSystem.Linux when host.Distro is HostDistro.Ubuntu or HostDistro.Debian =>
-                new FlatpakInstallPlan([["sudo", "apt-get", "install", "-y", "flatpak"]]),
+                new FlatpakInstallPlan(
+                    RefreshCacheKey: "apt",
+                    RefreshCommand: ["sudo", "apt-get", "update"],
+                    Commands: [["sudo", "apt-get", "install", "-y", "flatpak"]]),
 
             HostOperatingSystem.Linux when host.Distro is HostDistro.Arch or HostDistro.CachyOs =>
-                new FlatpakInstallPlan([["sudo", "pacman", "-S", "--noconfirm", "flatpak"]]),
+                new FlatpakInstallPlan(
+                    RefreshCacheKey: "pacman",
+                    RefreshCommand: ["sudo", "pacman", "-Sy", "--noconfirm"],
+                    Commands: [["sudo", "pacman", "-S", "--noconfirm", "flatpak"]]),
 
             HostOperatingSystem.Linux when host.Distro is HostDistro.Fedora =>
-                new FlatpakInstallPlan([["sudo", "dnf", "install", "-y", "flatpak"]]),
+                new FlatpakInstallPlan(
+                    RefreshCacheKey: "dnf",
+                    RefreshCommand: ["sudo", "dnf", "makecache", "-y"],
+                    Commands: [["sudo", "dnf", "install", "-y", "flatpak"]]),
 
             _ => null,
         };
@@ -231,7 +254,10 @@ public sealed class VendorCommand : ICommand
         return (exists, 0);
     }
 
-    private sealed record FlatpakInstallPlan(IReadOnlyList<string[]> Commands);
+    private sealed record FlatpakInstallPlan(
+        string RefreshCacheKey,
+        IReadOnlyList<string> RefreshCommand,
+        IReadOnlyList<string[]> Commands);
 
     private sealed record VendorOperationResult(bool HasChanged, int ExitCode, string? ErrorMessage)
     {

@@ -46,6 +46,29 @@ public sealed class PacmanCommand : ICommand
         bool desiredInstalled,
         Func<string, string[]> changeArgsFactory)
     {
+        if (desiredInstalled)
+        {
+            context.Shell.DescribeAction("running metadata refresh preflight for 'pacman'");
+            var preflightResult = await PackageVendorCommandSupport.EnsureMetadataFreshAsync(
+                context,
+                cacheKey: "pacman",
+                freshnessWindow: TimeSpan.FromMinutes(30),
+                fileName: "sudo",
+                "pacman",
+                "-Sy",
+                "--noconfirm");
+            if (!preflightResult.IsSuccess)
+            {
+                context.Reporter.Report(
+                    StatementStatus.Error,
+                    context.Command,
+                    declarationName,
+                    context.Inputs[0],
+                    preflightResult.ErrorMessage ?? "Failed to refresh package metadata.");
+                return preflightResult.ExitCode;
+            }
+        }
+
         foreach (var package in context.Inputs)
         {
             context.Shell.DescribeAction(

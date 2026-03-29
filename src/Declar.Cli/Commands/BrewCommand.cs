@@ -27,7 +27,13 @@ public sealed class BrewCommand : ICommand
                 changeArgsFactory: package => ["brew", "install", package],
                 missingRepositoryMessage: "No package with this name was found in configured brew repositories.",
                 notInstalledInCurrentStateMessage: "Package exists but is not installed in current system state.",
-                stillInstalledMessage: "Package is still installed in current system state.");
+                stillInstalledMessage: "Package is still installed in current system state.",
+                preflight: preflightContext => PackageVendorCommandSupport.EnsureMetadataFreshAsync(
+                    preflightContext,
+                    cacheKey: "brew",
+                    freshnessWindow: TimeSpan.FromMinutes(30),
+                    fileName: "brew",
+                    "update"));
         }
     }
 

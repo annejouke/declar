@@ -2,9 +2,9 @@ using Declar.Core;
 
 namespace Declar.Cli.Commands;
 
-public sealed class DnfCommand : ICommand
+public sealed class SnapCommand : ICommand
 {
-    public string Name => "dnf";
+    public string Name => "snap";
 
     public IReadOnlyList<IDeclaration> Declarations { get; } =
     [
@@ -24,18 +24,17 @@ public sealed class DnfCommand : ICommand
                 desiredInstalled: true,
                 isInstalledProbe: IsPackageInstalledAsync,
                 existsProbe: DoesPackageExistInRepositoryAsync,
-                changeArgsFactory: package => ["sudo", "dnf", "install", "-y", package],
-                missingRepositoryMessage: "No package with this name was found in configured dnf repositories.",
+                changeArgsFactory: package => ["sudo", "snap", "install", package],
+                missingRepositoryMessage: "No package with this name was found in configured snap repositories.",
                 notInstalledInCurrentStateMessage: "Package exists but is not installed in current system state.",
                 stillInstalledMessage: "Package is still installed in current system state.",
                 preflight: preflightContext => PackageVendorCommandSupport.EnsureMetadataFreshAsync(
                     preflightContext,
-                    cacheKey: "dnf",
+                    cacheKey: "snap",
                     freshnessWindow: TimeSpan.FromMinutes(30),
-                    fileName: "sudo",
-                    "dnf",
-                    "makecache",
-                    "-y"));
+                    fileName: "snap",
+                    "refresh",
+                    "--list"));
         }
     }
 
@@ -51,8 +50,8 @@ public sealed class DnfCommand : ICommand
                 desiredInstalled: false,
                 isInstalledProbe: IsPackageInstalledAsync,
                 existsProbe: DoesPackageExistInRepositoryAsync,
-                changeArgsFactory: package => ["sudo", "dnf", "remove", "-y", package],
-                missingRepositoryMessage: "No package with this name was found in configured dnf repositories.",
+                changeArgsFactory: package => ["sudo", "snap", "remove", package],
+                missingRepositoryMessage: "No package with this name was found in configured snap repositories.",
                 notInstalledInCurrentStateMessage: "Package exists but is not installed in current system state.",
                 stillInstalledMessage: "Package is still installed in current system state.");
         }
@@ -60,24 +59,36 @@ public sealed class DnfCommand : ICommand
 
     private static async Task<(bool Value, int ExitCode)> IsPackageInstalledAsync(CommandContext context, string package)
     {
-        var queryResult = await context.Shell.RunProbeAsync("dnf", "list", "installed", package);
-        return PackageVendorCommandSupport.ProbeBooleanFromExitCode(queryResult);
-    }
-
-    private static async Task<(bool ExistsInRepository, int ExitCode)> DoesPackageExistInRepositoryAsync(
-        CommandContext context,
-        string package)
-    {
-        var queryResult = await context.Shell.RunProbeAsync("dnf", "info", package);
+        var queryResult = await context.Shell.RunProbeAsync("snap", "list", package);
         if (queryResult.ExitCode == 0)
         {
             return (true, 0);
         }
 
         var combinedText = $"{queryResult.StdErr}\n{queryResult.StdOut}".ToLowerInvariant();
-        if (combinedText.Contains("no matching packages to list", StringComparison.Ordinal)
-            || combinedText.Contains("no matching packages to show", StringComparison.Ordinal)
-            || combinedText.Contains("no match for argument", StringComparison.Ordinal))
+        if (combinedText.Contains("no matching snaps installed", StringComparison.Ordinal)
+            || combinedText.Contains("not found", StringComparison.Ordinal))
+        {
+            return (false, 0);
+        }
+
+        return (false, queryResult.ExitCode);
+    }
+
+    private static async Task<(bool ExistsInRepository, int ExitCode)> DoesPackageExistInRepositoryAsync(
+        CommandContext context,
+        string package)
+    {
+        var queryResult = await context.Shell.RunProbeAsync("snap", "info", package);
+        if (queryResult.ExitCode == 0)
+        {
+            return (true, 0);
+        }
+
+        var combinedText = $"{queryResult.StdErr}\n{queryResult.StdOut}".ToLowerInvariant();
+        if (combinedText.Contains("not found", StringComparison.Ordinal)
+            || combinedText.Contains("no snap found", StringComparison.Ordinal)
+            || combinedText.Contains("snap not found", StringComparison.Ordinal))
         {
             return (false, 0);
         }

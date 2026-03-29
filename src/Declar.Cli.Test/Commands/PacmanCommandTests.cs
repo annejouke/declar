@@ -60,6 +60,8 @@ public class PacmanCommandTests
 
         Assert.Multiple(() =>
         {
+            Assert.That(result.StdOut, Does.Contain("     running metadata refresh preflight for 'pacman'"));
+            Assert.That(result.StdOut, Does.Contain("     preflight: would refresh 'pacman' metadata via 'sudo pacman -Sy --noconfirm'; skipped because --test is enabled"));
             Assert.That(result.StdOut, Does.Contain("     evaluating desired state 'installed' for package 'dotnet-sdk'"));
             Assert.That(result.StdOut, Does.Contain("     checking installed state for 'dotnet-sdk'"));
             Assert.That(result.StdOut, Does.Contain("     probe: pacman -Q dotnet-sdk"));

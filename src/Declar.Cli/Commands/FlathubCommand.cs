@@ -27,7 +27,15 @@ public sealed class FlathubCommand : ICommand
                 changeArgsFactory: package => ["flatpak", "install", "-y", "flathub", package],
                 missingRepositoryMessage: "No package with this id was found in the flathub remote.",
                 notInstalledInCurrentStateMessage: "Package exists but is not installed in current system state.",
-                stillInstalledMessage: "Package is still installed in current system state.");
+                stillInstalledMessage: "Package is still installed in current system state.",
+                preflight: preflightContext => PackageVendorCommandSupport.EnsureMetadataFreshAsync(
+                    preflightContext,
+                    cacheKey: "flathub",
+                    freshnessWindow: TimeSpan.FromMinutes(30),
+                    fileName: "flatpak",
+                    "update",
+                    "--appstream",
+                    "--noninteractive"));
         }
     }
 
