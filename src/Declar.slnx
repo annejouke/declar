@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Declar.Cli/Declar.Cli.csproj" />
+  <Project Path="Declar.Core/Declar.Core.csproj" />
+</Solution>
