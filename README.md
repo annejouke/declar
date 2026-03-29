@@ -69,3 +69,4 @@ Which certainly looks fancy, but theres's a chance we'll run into language desig
 These configs are configurable per-run by providing a CLI flag, or globally by creating a config file in the user's home directory at `~/.config/declar/config.ini` (or `%APPDATA%\declar\config.ini` on Windows)
 
 - `--confirm` / `-c` (default: `false`, using `--confirm` or `-c` set to true) - whether to confirm the state change of the OS before making changes, and whether to ask the user about any discrepancies
+- `--dry-run` / `-d` (default: `false`, using `--dry-run` or `-d` set to true) - whether to just print the commands that would be run, without actually running them
