@@ -124,10 +124,11 @@ public sealed class VendorCommand : ICommand
 
         if (!hasFlathubRemote)
         {
-            context.Shell.DescribeAction("adding flathub remote");
+            context.Shell.DescribeAction("adding user-scoped flathub remote (non-interactive)");
             var addRemoteResult = await context.Shell.RunAsync(
                 "flatpak",
                 "remote-add",
+                "--user",
                 "--if-not-exists",
                 "flathub",
                 FlathubRemoteUrl);
@@ -170,8 +171,8 @@ public sealed class VendorCommand : ICommand
             return VendorOperationResult.Success(false);
         }
 
-        context.Shell.DescribeAction("removing flathub remote");
-        var removeRemoteResult = await context.Shell.RunAsync("flatpak", "remote-delete", "flathub");
+        context.Shell.DescribeAction("removing user-scoped flathub remote");
+        var removeRemoteResult = await context.Shell.RunAsync("flatpak", "remote-delete", "--user", "flathub");
         if (removeRemoteResult.ExitCode != 0)
         {
             return VendorOperationResult.Error(
@@ -218,7 +219,7 @@ public sealed class VendorCommand : ICommand
 
     private static async Task<(bool Exists, int ExitCode)> HasFlathubRemoteAsync(CommandContext context)
     {
-        var probeResult = await context.Shell.RunProbeAsync("flatpak", "remote-list", "--columns=name");
+        var probeResult = await context.Shell.RunProbeAsync("flatpak", "remote-list", "--user", "--columns=name");
         if (probeResult.ExitCode != 0)
         {
             return (false, probeResult.ExitCode);
