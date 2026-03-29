@@ -2,53 +2,32 @@ namespace Declar.Cli.Test;
 
 public class VendorCommandTests
 {
-    private static readonly string[] Vendors =
-    [
-        "winget",
-        "apt",
-        "dnf",
-        "flathub",
-        "brew",
-    ];
-
-    [TestCaseSource(nameof(Vendors))]
-    public async Task VendorInstalled_WithTestFlag_PrintsStatusLine(string vendor)
+    [Test]
+    public async Task VendorInstalled_Flathub_WithTestFlag_PrintsStatusLine()
     {
-        var package = GetLikelyPackageName(vendor);
-        var result = await CliProcessTestHelper.RunCliAsync(vendor, "installed", package, "--test");
+        var result = await CliProcessTestHelper.RunCliAsync("vendor", "installed", "flathub", "--test");
 
-        Assert.That(result.StdOut, Does.Match($"\\[(OK|ER)\\] {vendor} installed {package}"));
+        Assert.That(result.StdOut, Does.Match("\\[(OK|CH|ER)\\] vendor installed flathub"));
     }
 
-    [TestCaseSource(nameof(Vendors))]
-    public async Task VendorRemoved_WithTestFlag_PrintsStatusLine(string vendor)
+    [Test]
+    public async Task VendorRemoved_Flathub_WithTestFlag_PrintsStatusLine()
     {
-        var package = GetLikelyPackageName(vendor);
-        var result = await CliProcessTestHelper.RunCliAsync(vendor, "removed", package, "--test");
+        var result = await CliProcessTestHelper.RunCliAsync("vendor", "removed", "flathub", "--test");
 
-        Assert.That(result.StdOut, Does.Match($"\\[(OK|ER)\\] {vendor} removed {package}"));
+        Assert.That(result.StdOut, Does.Match("\\[(OK|CH|ER)\\] vendor removed flathub"));
     }
 
-    [TestCaseSource(nameof(Vendors))]
-    public async Task VendorInstalled_WithUnknownFlag_ReturnsError(string vendor)
+    [Test]
+    public async Task VendorInstalled_WithUnsupportedVendor_ReturnsError()
     {
-        var package = GetLikelyPackageName(vendor);
-        var result = await CliProcessTestHelper.RunCliAsync(vendor, "installed", package, "--test", "--unknown");
+        var result = await CliProcessTestHelper.RunCliAsync("vendor", "installed", "npm", "--test");
 
         Assert.Multiple(() =>
         {
             Assert.That(result.ExitCode, Is.Not.EqualTo(0));
-            Assert.That(result.StdOut, Does.Contain($"[ER] {vendor} installed {package}"));
+            Assert.That(result.StdOut, Does.Contain("[ER] vendor installed npm"));
+            Assert.That(result.StdOut, Does.Contain("Unsupported vendor. Currently supported: flathub."));
         });
-    }
-
-    private static string GetLikelyPackageName(string vendor)
-    {
-        return vendor switch
-        {
-            "winget" => "Microsoft.PowerShell",
-            "flathub" => "org.freedesktop.Platform",
-            _ => "curl",
-        };
     }
 }
