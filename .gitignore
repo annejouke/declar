@@ -26,3 +26,6 @@ msbuild.err
 msbuild.wrn
 
 .vs/
+
+# Project
+dist/

@@ -5,7 +5,13 @@ namespace Declar.Cli;
 public sealed class TerminalReporter : ITerminalReporter
 {
     private readonly object sync = new();
+    private readonly bool useInlineUpdates;
     private string? pendingStatementKey;
+
+    public TerminalReporter(bool useInlineUpdates = true)
+    {
+        this.useInlineUpdates = useInlineUpdates;
+    }
 
     public void Report(StatementStatus status, string command, string declaration, string state, string? reason = null)
     {
@@ -30,15 +36,21 @@ public sealed class TerminalReporter : ITerminalReporter
             {
                 pendingStatementKey = statementKey;
 
-                if (!Console.IsOutputRedirected)
+                if (useInlineUpdates && !Console.IsOutputRedirected)
                 {
                     WriteColored(line, color, appendNewLine: false);
+                }
+                else
+                {
+                    WriteColored(line, color, appendNewLine: true);
                 }
 
                 return;
             }
 
             var shouldReplacePendingLine =
+                useInlineUpdates
+                &&
                 !Console.IsOutputRedirected
                 && string.Equals(pendingStatementKey, statementKey, StringComparison.Ordinal);
 
