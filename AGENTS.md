@@ -62,6 +62,8 @@ Tests have not been implemented yet. When adding tests:
 - Parameters and local variables: `camelCase`
 - Constants: `PascalCase`
 - Namespaces: `PascalCase` (typically `Declar.<Module>.<SubModule>`)
+- File names must match their primary contents. In C#, name a file after its main type, and name test files after the test class or subject they cover.
+- Reserve `Declar` for the solution name and base namespace only. Do not include `Declar` in class names, record names, interface names, enum names, method names, variable names, or file names unless the item is specifically the root namespace or solution artifact.
 
 ### Type Guidelines
 - Prefer interfaces for dependencies (e.g., `IVendor`, `IConfigParser`)

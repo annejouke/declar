@@ -64,8 +64,24 @@ Current thoughts are that the CLI will check before running any command if the v
 
 Which certainly looks fancy, but theres's a chance we'll run into language design issues later
 
+## Language
+
+- `command` - pacman, apt, hosts, systemd-unit, etc
+- `declaration` - installed, removed, commented, uncommented, etc
+- `input(s)` - one or more inputs, multiple packages, multiple lines - broken by the first flag or the end of the command
+- `--flag` - any flags, valid as `--flag` will assume the inverse of the default if it's a toggle, or `--flag value` if it's a value to be set; multiple values allowed, next flag breaks the command
+- Single-dash flags can be mixed so `-cli` will be treated as `-c -l -i`
+
+### Limitations
+
+- 3 non-flagged items are required: command, declaration, input(s)
+- Flags must come after the 3 non-flagged items, and can be in any order, but must be after the 3 non-flagged items
+- Inputs cannot start with `--` or `-`, as that would be confused with flags
+
 ## Configs
 
 These configs are configurable per-run by providing a CLI flag, or globally by creating a config file in the user's home directory at `~/.config/declar/config.ini` (or `%APPDATA%\declar\config.ini` on Windows)
 
 - `--confirm` / `-c` (default: `false`, using `--confirm` or `-c` set to true) - whether to confirm the state change of the OS before making changes, and whether to ask the user about any discrepancies
+- `--report` / `-r` (default: `false`, using `--report` or `-r` set to true) - reports line-by-line which commands the CLI is execution on the host
+- `--test` / `-t` (default: `false`, using `--test` or `-t` set to true) - whether to just print the commands that would be run, without actually running them
