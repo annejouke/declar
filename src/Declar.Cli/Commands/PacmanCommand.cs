@@ -46,10 +46,36 @@ public sealed class PacmanCommand : ICommand
         bool desiredInstalled,
         Func<string, string[]> changeArgsFactory)
     {
+        if (desiredInstalled)
+        {
+            context.Shell.DescribeAction("running metadata refresh preflight for 'pacman'");
+            var preflightResult = await PackageVendorCommandSupport.EnsureMetadataFreshAsync(
+                context,
+                cacheKey: "pacman",
+                freshnessWindow: TimeSpan.FromMinutes(30),
+                fileName: "sudo",
+                "pacman",
+                "-Sy",
+                "--noconfirm");
+            if (!preflightResult.IsSuccess)
+            {
+                context.Reporter.Report(
+                    StatementStatus.Error,
+                    context.Command,
+                    declarationName,
+                    context.Inputs[0],
+                    preflightResult.ErrorMessage ?? "Failed to refresh package metadata.");
+                return preflightResult.ExitCode;
+            }
+        }
+
         foreach (var package in context.Inputs)
         {
+            context.Shell.DescribeAction(
+                $"evaluating desired state '{declarationName}' for package '{package}'");
             context.Reporter.Report(StatementStatus.Working, context.Command, declarationName, package);
 
+            context.Shell.DescribeAction($"checking installed state for '{package}'");
             var (Value, ExitCode) = await IsPackageInstalledAsync(context, package);
             if (ExitCode != 0)
             {
@@ -64,6 +90,8 @@ public sealed class PacmanCommand : ICommand
 
             if (context.Options.Test)
             {
+                context.Shell.DescribeAction(
+                    $"--test mode active; validating expected state without mutating '{package}'");
                 if (Value == desiredInstalled)
                 {
                     context.Reporter.Report(StatementStatus.Ok, context.Command, declarationName, package);
@@ -72,6 +100,7 @@ public sealed class PacmanCommand : ICommand
 
                 if (desiredInstalled)
                 {
+                    context.Shell.DescribeAction($"checking repository availability for '{package}'");
                     var (ExistsInRepository, ExistsProbeExitCode) = await DoesPackageExistInRepositoryAsync(context, package);
                     if (ExistsProbeExitCode != 0)
                     {
@@ -120,6 +149,7 @@ public sealed class PacmanCommand : ICommand
             }
 
             var changeArgs = changeArgsFactory(package);
+            context.Shell.DescribeAction($"applying state change for '{package}'");
             var changeResult = await context.Shell.RunAsync(changeArgs[0], [.. changeArgs.Skip(1)]);
             if (changeResult.ExitCode != 0)
             {

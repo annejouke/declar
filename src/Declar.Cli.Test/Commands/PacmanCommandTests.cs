@@ -52,4 +52,19 @@ public class PacmanCommandTests
             Assert.That(result.StdOut, Does.Contain("[ER] pacman installed dotnet-sdk"));
         });
     }
+
+    [Test]
+    public async Task PacmanInstalled_WithReportFlag_PrintsVerboseTraceLines()
+    {
+        var result = await CliProcessTestHelper.RunCliAsync("pacman", "installed", "dotnet-sdk", "--test", "--report");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.StdOut, Does.Contain("     running metadata refresh preflight for 'pacman'"));
+            Assert.That(result.StdOut, Does.Contain("     preflight: would refresh 'pacman' metadata via 'sudo pacman -Sy --noconfirm'; skipped because --test is enabled"));
+            Assert.That(result.StdOut, Does.Contain("     evaluating desired state 'installed' for package 'dotnet-sdk'"));
+            Assert.That(result.StdOut, Does.Contain("     checking installed state for 'dotnet-sdk'"));
+            Assert.That(result.StdOut, Does.Contain("     probe: pacman -Q dotnet-sdk"));
+        });
+    }
 }

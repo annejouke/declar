@@ -25,7 +25,7 @@ public sealed class CommandHandler
         IReadOnlyList<string> inputs,
         IReadOnlyList<FlagToken> providedFlags)
     {
-        var reporter = new TerminalReporter();
+        ITerminalReporter reporter = new TerminalReporter();
         var normalizedCommand = command.Trim().ToLowerInvariant();
         var normalizedDeclaration = declaration.Trim().ToLowerInvariant();
         var normalizedInputs = inputs
@@ -80,6 +80,11 @@ public sealed class CommandHandler
             }
 
             options = applyResult.Options;
+        }
+
+        if (options.Report)
+        {
+            reporter = new TerminalReporter(useInlineUpdates: false);
         }
 
         var commandHandler = commands.FirstOrDefault(candidate =>
