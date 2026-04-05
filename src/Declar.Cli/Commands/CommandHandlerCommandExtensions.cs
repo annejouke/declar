@@ -11,6 +11,7 @@ public static class CommandHandlerCommandExtensions
             .AddCommand(new FlathubCommand())
             .AddCommand(new HostsCommand())
             .AddCommand(new PacmanCommand())
+            .AddCommand(new ParuCommand())
             .AddCommand(new SnapCommand())
             .AddCommand(new VendorCommand())
             .AddCommand(new WingetCommand());

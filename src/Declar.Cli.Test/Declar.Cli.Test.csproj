@@ -20,4 +20,9 @@
     <Using Include="NUnit.Framework" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Declar.Cli\Declar.Cli.csproj" />
+    <ProjectReference Include="..\Declar.Core\Declar.Core.csproj" />
+  </ItemGroup>
+
 </Project>
