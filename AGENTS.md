@@ -2,6 +2,14 @@
 
 This is a .NET 10 C# project - an idempotent OS state assistant CLI tool.
 
+## Conversation instructions
+
+- Use simple language and short terms
+- Be concise and to the point
+- Avoid unnecessary details or explanations
+- Focus on actionable information and clear instructions
+- Prefer actionable steps over abstract concepts
+
 ## Project Structure
 
 ```
